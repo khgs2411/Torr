@@ -68,6 +68,9 @@ if [ "$CONFIG" = "release" ]; then
 
     rm -rf "$DMG_STAGING"
 
+    # Clean up — only keep the DMG
+    rm -rf "$BUNDLE_DIR"
+
     echo "==> DMG created:"
     echo "    $DMG_PATH"
     echo "    Size: $(du -sh "$DMG_PATH" | cut -f1)"
@@ -75,7 +78,8 @@ fi
 
 echo ""
 echo "==> Done!"
-echo "    Run:     open $BUNDLE_DIR"
 if [ "$CONFIG" = "release" ]; then
     echo "    Share:   $DMG_PATH"
+else
+    echo "    Run:     open $BUNDLE_DIR"
 fi
