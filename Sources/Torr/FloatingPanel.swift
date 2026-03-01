@@ -43,7 +43,8 @@ final class FloatingPanel: NSPanel {
         hostingView.translatesAutoresizingMaskIntoConstraints = false
 
         let visualEffect = NSVisualEffectView()
-        visualEffect.material = .hudWindow
+        visualEffect.appearance = NSAppearance(named: .darkAqua)
+        visualEffect.material = .underWindowBackground
         visualEffect.state = .active
         visualEffect.blendingMode = .behindWindow
         visualEffect.wantsLayer = true

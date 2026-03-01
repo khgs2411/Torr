@@ -21,12 +21,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
 
         if let button = statusItem?.button {
-            let image = NSImage(
-                systemSymbolName: "memorychip",
-                accessibilityDescription: "Torr Memory Monitor"
-            )
-            image?.isTemplate = false
-            button.image = image
+            if let image = NSImage(systemSymbolName: "memorychip", accessibilityDescription: "Torr Memory Monitor") {
+                image.isTemplate = true
+                button.image = image
+            } else {
+                button.title = "T"
+            }
             button.action = #selector(togglePanel)
             button.target = self
         }
