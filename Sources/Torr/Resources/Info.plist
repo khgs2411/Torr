@@ -6,5 +6,21 @@
     <string>com.torr.memorymonitor</string>
     <key>CFBundleName</key>
     <string>Torr</string>
+    <key>CFBundleDisplayName</key>
+    <string>Torr</string>
+    <key>CFBundleExecutable</key>
+    <string>Torr</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
 </dict>
 </plist>
