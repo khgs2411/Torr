@@ -6,32 +6,44 @@ Torr lives in your menu bar and displays a floating translucent overlay with rea
 
 ## Features
 
-- **Menu bar app** -- no Dock icon, minimal footprint
+- **Menu bar app** -- no Dock icon, minimal footprint (~1MB)
 - **Floating overlay** -- always-on-top translucent HUD, draggable, remembers position
 - **Real-time stats** -- Physical Memory, Memory Used, Cached Files, Swap Used
 - **Memory Pressure** -- color-coded bar (green/yellow/red) based on compressed memory ratio
 - **Sparkline graph** -- rolling 2-minute history of memory usage
 
-## Requirements
+## Download
+
+Grab the latest release from the [Releases page](https://github.com/khgs2411/Torr/releases/latest).
+
+1. Download **Torr.dmg**
+2. Open the DMG
+3. Drag **Torr** to **Applications**
+4. Right-click Torr in Applications > **Open** (first launch only, since the app is unsigned)
+
+### Requirements
 
 - macOS 13.0 (Ventura) or later
 - Apple Silicon or Intel Mac
 
-## Build & Run
+## Build from Source
 
-### Development (SPM)
+Clone the repo and build with Swift Package Manager:
 
 ```bash
+git clone https://github.com/khgs2411/Torr.git
+cd Torr
 swift build
 swift run Torr
 ```
 
-### App Bundle
+### Release Build (DMG)
 
 ```bash
 ./scripts/build-app.sh release
-open build/Torr.app
 ```
+
+Produces `build/Torr.dmg` ready to share.
 
 ### Tests
 
