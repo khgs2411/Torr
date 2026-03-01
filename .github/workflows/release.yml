@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  build-and-release:
+    runs-on: macos-15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build and create DMG
+        run: ./scripts/build-app.sh release
+
+      - name: Run tests
+        run: swift test
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "Torr ${{ github.ref_name }}"
+          body: |
+            ## Torr ${{ github.ref_name }}
+
+            Lightweight macOS memory monitor widget.
+
+            ### Install
+            1. Download `Torr.dmg` below
+            2. Open the DMG
+            3. Drag **Torr** to **Applications**
+            4. Right-click Torr in Applications > **Open** (first time only, since the app is unsigned)
+
+            ### Requirements
+            - macOS 13.0 (Ventura) or later
+          files: build/Torr.dmg
