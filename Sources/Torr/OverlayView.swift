@@ -72,7 +72,7 @@ struct OverlayView: View {
 
                     RoundedRectangle(cornerRadius: 2)
                         .fill(pressureColor)
-                        .frame(width: geo.size.width * CGFloat(monitor.compressedRatio))
+                        .frame(width: geo.size.width * CGFloat(monitor.usageRatio))
                 }
             }
             .frame(height: 6)

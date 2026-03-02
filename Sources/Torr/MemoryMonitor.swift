@@ -1,4 +1,5 @@
 import Foundation
+import Dispatch
 import Darwin
 
 final class MemoryMonitor: ObservableObject {
@@ -12,7 +13,7 @@ final class MemoryMonitor: ObservableObject {
     @Published var memoryUsed: Int64 = 0
     @Published var cachedFiles: Int64 = 0
     @Published var swapUsed: Int64 = 0
-    @Published var compressedRatio: Double = 0.0
+    @Published var usageRatio: Double = 0.0
     @Published var pressureLevel: PressureLevel = .nominal
     @Published var usageHistory: [Double] = []
 
@@ -20,10 +21,12 @@ final class MemoryMonitor: ObservableObject {
 
     private let maxHistory = 60
     private var timer: Timer?
+    private var pressureSource: DispatchSourceMemoryPressure?
 
     func startPolling(interval: TimeInterval = 2.0) {
         stopPolling()
         refresh()
+        startPressureMonitoring()
         timer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
             self?.refresh()
         }
@@ -32,6 +35,12 @@ final class MemoryMonitor: ObservableObject {
     func stopPolling() {
         timer?.invalidate()
         timer = nil
+        pressureSource?.cancel()
+        pressureSource = nil
+    }
+
+    deinit {
+        stopPolling()
     }
 
     func refresh() {
@@ -40,33 +49,18 @@ final class MemoryMonitor: ObservableObject {
         let pageSize = Int64(vm_kernel_page_size)
 
         let free = Int64(stats.free_count) * pageSize
-        let inactive = Int64(stats.inactive_count) * pageSize
         let purgeable = Int64(stats.purgeable_count) * pageSize
         let external = Int64(stats.external_page_count) * pageSize
-        let compressed = Int64(stats.compressor_page_count) * pageSize
 
         let total = Int64(totalRAM)
 
         let cached = purgeable + external
-        let used = total - free - inactive - cached
+        let used = total - free - cached
 
         memoryUsed = max(used, 0)
         cachedFiles = max(cached, 0)
 
-        let denominator = Double(used + compressed)
-        if denominator > 0 {
-            compressedRatio = min(Double(compressed) / denominator, 1.0)
-        } else {
-            compressedRatio = 0.0
-        }
-
-        if compressedRatio < 0.5 {
-            pressureLevel = .nominal
-        } else if compressedRatio < 0.8 {
-            pressureLevel = .warning
-        } else {
-            pressureLevel = .critical
-        }
+        usageRatio = total > 0 ? min(Double(memoryUsed) / Double(total), 1.0) : 0.0
 
         if let swap = Self.getSwapUsage() {
             swapUsed = Int64(swap.xsu_used)
@@ -74,11 +68,27 @@ final class MemoryMonitor: ObservableObject {
             swapUsed = 0
         }
 
-        let fraction = total > 0 ? min(Double(memoryUsed) / Double(total), 1.0) : 0.0
-        usageHistory.append(fraction)
+        usageHistory.append(usageRatio)
         if usageHistory.count > maxHistory {
             usageHistory.removeFirst(usageHistory.count - maxHistory)
         }
+    }
+
+    private func startPressureMonitoring() {
+        let source = DispatchSource.makeMemoryPressureSource(eventMask: .all, queue: .main)
+        source.setEventHandler { [weak self] in
+            guard let self else { return }
+            let event = DispatchSource.MemoryPressureEvent(rawValue: source.data)
+            if event.contains(.critical) {
+                self.pressureLevel = .critical
+            } else if event.contains(.warning) {
+                self.pressureLevel = .warning
+            } else {
+                self.pressureLevel = .nominal
+            }
+        }
+        source.resume()
+        pressureSource = source
     }
 
     private static func getVMStats() -> vm_statistics64_data_t? {
