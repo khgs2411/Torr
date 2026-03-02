@@ -24,7 +24,7 @@ struct OverlayView: View {
             pressureBar
 
             MemoryGraphView(
-                data: monitor.usageHistory,
+                data: monitor.pressureHistory,
                 lineColor: pressureColor,
                 fillColor: pressureColor.opacity(0.15)
             )
@@ -72,7 +72,7 @@ struct OverlayView: View {
 
                     RoundedRectangle(cornerRadius: 2)
                         .fill(pressureColor)
-                        .frame(width: geo.size.width * CGFloat(monitor.usageRatio))
+                        .frame(width: geo.size.width * CGFloat(monitor.pressureRatio))
                 }
             }
             .frame(height: 6)

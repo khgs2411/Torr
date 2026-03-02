@@ -53,33 +53,33 @@ final class MemoryMonitorTests: XCTestCase {
         XCTAssertTrue(validLevels.contains(monitor.pressureLevel))
     }
 
-    func testUsageRatioIsNonNegative() {
+    func testPressureRatioIsNonNegative() {
         monitor.refresh()
-        XCTAssertGreaterThanOrEqual(monitor.usageRatio, 0.0)
-        XCTAssertLessThanOrEqual(monitor.usageRatio, 1.0)
+        XCTAssertGreaterThanOrEqual(monitor.pressureRatio, 0.0)
+        XCTAssertLessThanOrEqual(monitor.pressureRatio, 1.0)
     }
 
     func testHistoryStartsEmpty() {
-        XCTAssertTrue(monitor.usageHistory.isEmpty)
+        XCTAssertTrue(monitor.pressureHistory.isEmpty)
     }
 
     func testRefreshAppendsToHistory() {
         monitor.refresh()
-        XCTAssertEqual(monitor.usageHistory.count, 1)
+        XCTAssertEqual(monitor.pressureHistory.count, 1)
         monitor.refresh()
-        XCTAssertEqual(monitor.usageHistory.count, 2)
+        XCTAssertEqual(monitor.pressureHistory.count, 2)
     }
 
     func testHistoryCapsAt60() {
         for _ in 0..<65 {
             monitor.refresh()
         }
-        XCTAssertEqual(monitor.usageHistory.count, 60)
+        XCTAssertEqual(monitor.pressureHistory.count, 60)
     }
 
     func testHistoryValuesAreBetweenZeroAndOne() {
         monitor.refresh()
-        for value in monitor.usageHistory {
+        for value in monitor.pressureHistory {
             XCTAssertGreaterThanOrEqual(value, 0.0)
             XCTAssertLessThanOrEqual(value, 1.0)
         }

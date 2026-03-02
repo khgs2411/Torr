@@ -13,9 +13,9 @@ final class MemoryMonitor: ObservableObject {
     @Published var memoryUsed: Int64 = 0
     @Published var cachedFiles: Int64 = 0
     @Published var swapUsed: Int64 = 0
-    @Published var usageRatio: Double = 0.0
+    @Published var pressureRatio: Double = 0.0
     @Published var pressureLevel: PressureLevel = .nominal
-    @Published var usageHistory: [Double] = []
+    @Published var pressureHistory: [Double] = []
 
     let totalRAM: UInt64 = ProcessInfo.processInfo.physicalMemory
 
@@ -51,6 +51,7 @@ final class MemoryMonitor: ObservableObject {
         let free = Int64(stats.free_count) * pageSize
         let purgeable = Int64(stats.purgeable_count) * pageSize
         let external = Int64(stats.external_page_count) * pageSize
+        let compressed = Int64(stats.compressor_page_count) * pageSize
 
         let total = Int64(totalRAM)
 
@@ -60,17 +61,21 @@ final class MemoryMonitor: ObservableObject {
         memoryUsed = max(used, 0)
         cachedFiles = max(cached, 0)
 
-        usageRatio = total > 0 ? min(Double(memoryUsed) / Double(total), 1.0) : 0.0
-
         if let swap = Self.getSwapUsage() {
             swapUsed = Int64(swap.xsu_used)
         } else {
             swapUsed = 0
         }
 
-        usageHistory.append(usageRatio)
-        if usageHistory.count > maxHistory {
-            usageHistory.removeFirst(usageHistory.count - maxHistory)
+        // Pressure signal: compression + swap activity relative to total RAM.
+        // Low when system is comfortable, rises when compressor/swap are working hard.
+        let compressionFraction = Double(compressed) / Double(total)
+        let swapFraction = Double(swapUsed) / Double(total)
+        pressureRatio = min(compressionFraction + swapFraction * 2.0, 1.0)
+
+        pressureHistory.append(pressureRatio)
+        if pressureHistory.count > maxHistory {
+            pressureHistory.removeFirst(pressureHistory.count - maxHistory)
         }
     }
 
