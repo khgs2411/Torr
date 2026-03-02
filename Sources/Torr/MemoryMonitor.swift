@@ -51,7 +51,6 @@ final class MemoryMonitor: ObservableObject {
         let free = Int64(stats.free_count) * pageSize
         let purgeable = Int64(stats.purgeable_count) * pageSize
         let external = Int64(stats.external_page_count) * pageSize
-        let compressed = Int64(stats.compressor_page_count) * pageSize
 
         let total = Int64(totalRAM)
 
@@ -67,11 +66,9 @@ final class MemoryMonitor: ObservableObject {
             swapUsed = 0
         }
 
-        // Pressure signal: compression + swap activity relative to total RAM.
-        // Low when system is comfortable, rises when compressor/swap are working hard.
-        let compressionFraction = Double(compressed) / Double(total)
-        let swapFraction = Double(swapUsed) / Double(total)
-        pressureRatio = min(compressionFraction + swapFraction * 2.0, 1.0)
+        // Read kernel memory pressure directly — same source as Activity Monitor.
+        // kern.memorystatus_level: 0 (critical) to 100 (no pressure).
+        pressureRatio = Self.getMemoryPressure()
 
         pressureHistory.append(pressureRatio)
         if pressureHistory.count > maxHistory {
@@ -107,6 +104,15 @@ final class MemoryMonitor: ObservableObject {
             }
         }
         return result == KERN_SUCCESS ? stats : nil
+    }
+
+    private static func getMemoryPressure() -> Double {
+        var level = 0
+        var size = MemoryLayout<Int>.size
+        let result = sysctlbyname("kern.memorystatus_level", &level, &size, nil, 0)
+        guard result == 0 else { return 0.0 }
+        // level is 0-100 where 100 = no pressure. Invert to 0.0-1.0 where 1.0 = max pressure.
+        return min(max(Double(100 - level) / 100.0, 0.0), 1.0)
     }
 
     private static func getSwapUsage() -> xsw_usage? {
