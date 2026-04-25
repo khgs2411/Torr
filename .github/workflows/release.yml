@@ -14,12 +14,16 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Import Developer ID certificate
-        if: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 != '' }}
         env:
           MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
+          if [ -z "$MACOS_CERTIFICATE_P12_BASE64" ]; then
+            echo "Skipping certificate import (MACOS_CERTIFICATE_P12_BASE64 not set)"
+            exit 0
+          fi
+
           CERTIFICATE_PATH="$RUNNER_TEMP/developer-id.p12"
           KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
 
