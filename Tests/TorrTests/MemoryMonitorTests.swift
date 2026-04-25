@@ -98,4 +98,41 @@ final class MemoryMonitorTests: XCTestCase {
     func testFormatBytesZero() {
         XCTAssertEqual(MemoryMonitor.formatBytes(0), "0 MB")
     }
+
+    func testMenuBarIconUsesGreenForNominalPressure() {
+        let state = MenuBarIconState(pressureLevel: .nominal, swapUsed: 0)
+        XCTAssertEqual(state.pressureColor, .green)
+    }
+
+    func testMenuBarIconUsesYellowForWarningPressure() {
+        let state = MenuBarIconState(pressureLevel: .warning, swapUsed: 0)
+        XCTAssertEqual(state.pressureColor, .yellow)
+    }
+
+    func testMenuBarIconUsesRedForCriticalPressure() {
+        let state = MenuBarIconState(pressureLevel: .critical, swapUsed: 0)
+        XCTAssertEqual(state.pressureColor, .red)
+    }
+
+    func testMenuBarIconHidesSwapBadgeWhenSwapIsZero() {
+        let state = MenuBarIconState(pressureLevel: .nominal, swapUsed: 0)
+        XCTAssertNil(state.swapBadgeColor)
+    }
+
+    func testMenuBarIconUsesYellowSwapBadgeForNonZeroSwapUpToOneGB() {
+        let state = MenuBarIconState(pressureLevel: .nominal, swapUsed: 1_073_741_824)
+        XCTAssertEqual(state.swapBadgeColor, .yellow)
+    }
+
+    func testMenuBarIconUsesRedSwapBadgeAboveOneGB() {
+        let state = MenuBarIconState(pressureLevel: .nominal, swapUsed: 1_073_741_825)
+        XCTAssertEqual(state.swapBadgeColor, .red)
+    }
+
+    func testMenuBarIconStaticModeKeepsPressureColorDecisionButHidesSwapBadge() {
+        let state = MenuBarIconState(pressureLevel: .critical, swapUsed: 1_073_741_825, usesColor: false)
+        XCTAssertEqual(state.pressureColor, .red)
+        XCTAssertFalse(state.usesColor)
+        XCTAssertNil(state.swapBadgeColor)
+    }
 }

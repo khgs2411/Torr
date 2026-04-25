@@ -1,15 +1,21 @@
 import AppKit
+import Combine
 import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
 
+    private static let colorMenuBarIconKey = "torr.colorMenuBarIcon"
+
     private var statusItem: NSStatusItem?
+    private var colorMenuItem: NSMenuItem?
     private var panel: FloatingPanel?
     private let monitor = MemoryMonitor()
+    private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupMenuBarIcon()
         setupPanel()
+        bindMenuBarIcon()
         monitor.startPolling(interval: 2.0)
     }
 
@@ -18,15 +24,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func setupMenuBarIcon() {
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        registerDefaults()
+
+        statusItem = NSStatusBar.system.statusItem(withLength: MenuBarIconRenderer.statusItemLength)
 
         if let button = statusItem?.button {
-            if let image = NSImage(systemSymbolName: "memorychip", accessibilityDescription: "Torr Memory Monitor") {
-                image.isTemplate = true
-                button.image = image
-            } else {
-                button.title = "T"
-            }
+            button.image = MenuBarIconRenderer.makeImage(state: currentMenuBarIconState)
+            button.imagePosition = .imageOnly
             button.action = #selector(togglePanel)
             button.target = self
         }
@@ -34,8 +38,44 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: "Toggle Overlay", action: #selector(togglePanel), keyEquivalent: "t"))
         menu.addItem(NSMenuItem.separator())
+        let colorItem = NSMenuItem(title: "Color Menu Bar Icon", action: #selector(toggleColorMenuBarIcon), keyEquivalent: "")
+        colorItem.target = self
+        colorMenuItem = colorItem
+        menu.addItem(colorItem)
+        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit Torr", action: #selector(quitApp), keyEquivalent: "q"))
         statusItem?.menu = menu
+        updateColorMenuItem()
+    }
+
+    private func registerDefaults() {
+        UserDefaults.standard.register(defaults: [Self.colorMenuBarIconKey: true])
+    }
+
+    private func bindMenuBarIcon() {
+        Publishers.CombineLatest(monitor.$pressureLevel, monitor.$swapUsed)
+            .receive(on: RunLoop.main)
+            .sink { [weak self] pressureLevel, swapUsed in
+                self?.updateMenuBarIcon(pressureLevel: pressureLevel, swapUsed: swapUsed)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func updateMenuBarIcon(pressureLevel: MemoryMonitor.PressureLevel, swapUsed: Int64) {
+        let state = MenuBarIconState(pressureLevel: pressureLevel, swapUsed: swapUsed, usesColor: usesColorMenuBarIcon)
+        statusItem?.button?.image = MenuBarIconRenderer.makeImage(state: state)
+    }
+
+    private var currentMenuBarIconState: MenuBarIconState {
+        MenuBarIconState(pressureLevel: monitor.pressureLevel, swapUsed: monitor.swapUsed, usesColor: usesColorMenuBarIcon)
+    }
+
+    private var usesColorMenuBarIcon: Bool {
+        UserDefaults.standard.bool(forKey: Self.colorMenuBarIconKey)
+    }
+
+    private func updateColorMenuItem() {
+        colorMenuItem?.state = usesColorMenuBarIcon ? .on : .off
     }
 
     private func setupPanel() {
@@ -71,5 +111,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func quitApp() {
         monitor.stopPolling()
         NSApplication.shared.terminate(nil)
+    }
+
+    @objc private func toggleColorMenuBarIcon() {
+        UserDefaults.standard.set(!usesColorMenuBarIcon, forKey: Self.colorMenuBarIconKey)
+        updateColorMenuItem()
+        updateMenuBarIcon(pressureLevel: monitor.pressureLevel, swapUsed: monitor.swapUsed)
     }
 }
