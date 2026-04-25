@@ -47,10 +47,10 @@ struct MenuBarIconState: Equatable {
 }
 
 enum MenuBarIconRenderer {
-    static let statusItemLength: CGFloat = 20
+    static let statusItemLength: CGFloat = 22
 
     static func makeImage(state: MenuBarIconState) -> NSImage {
-        let size = NSSize(width: 20, height: 18)
+        let size = NSSize(width: 22, height: 18)
         let image = NSImage(size: size)
         image.lockFocus()
         defer { image.unlockFocus() }
@@ -59,7 +59,7 @@ enum MenuBarIconRenderer {
         NSRect(origin: .zero, size: size).fill()
 
         drawChip(
-            in: NSRect(x: 3.2, y: 3.0, width: 13.6, height: 12.0),
+            in: NSRect(x: 3.0, y: 2.0, width: 16.0, height: 14.0),
             fillColor: state.usesColor ? state.pressureColor.nsColor : NSColor.labelColor.withAlphaComponent(0.12),
             strokeColor: NSColor.black
         )
@@ -77,17 +77,17 @@ enum MenuBarIconRenderer {
         fillColor.setFill()
         body.fill()
         strokeColor.setStroke()
-        body.lineWidth = 1.4
+        body.lineWidth = 1.8
         body.stroke()
 
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.monospacedSystemFont(ofSize: 9.5, weight: .black),
+            .font: NSFont.monospacedSystemFont(ofSize: 12.0, weight: .black),
             .foregroundColor: strokeColor,
             .paragraphStyle: paragraph
         ]
-        "T".draw(in: NSRect(x: rect.minX, y: rect.minY + 0.7, width: rect.width, height: rect.height), withAttributes: attributes)
+        "T".draw(in: NSRect(x: rect.minX, y: rect.minY + 0.3, width: rect.width, height: rect.height), withAttributes: attributes)
 
         drawPins(rect: rect, color: strokeColor)
     }
@@ -95,26 +95,26 @@ enum MenuBarIconRenderer {
     private static func drawPins(rect: NSRect, color: NSColor) {
         color.setStroke()
         let pins = NSBezierPath()
-        let horizontalPins = [rect.minY + 3.0, rect.maxY - 3.0]
+        let horizontalPins = [rect.minY + 3.7, rect.maxY - 3.7]
         for y in horizontalPins {
-            pins.move(to: NSPoint(x: rect.minX - 2.2, y: y))
-            pins.line(to: NSPoint(x: rect.minX - 0.1, y: y))
-            pins.move(to: NSPoint(x: rect.maxX + 0.1, y: y))
-            pins.line(to: NSPoint(x: rect.maxX + 2.2, y: y))
+            pins.move(to: NSPoint(x: rect.minX - 2.0, y: y))
+            pins.line(to: NSPoint(x: rect.minX - 0.2, y: y))
+            pins.move(to: NSPoint(x: rect.maxX + 0.2, y: y))
+            pins.line(to: NSPoint(x: rect.maxX + 2.0, y: y))
         }
 
-        let verticalPins = [rect.minX + 3.0, rect.maxX - 3.0]
+        let verticalPins = [rect.minX + 4.0, rect.maxX - 4.0]
         for x in verticalPins {
             pins.move(to: NSPoint(x: x, y: rect.maxY + 0.2))
             pins.line(to: NSPoint(x: x, y: rect.maxY + 1.8))
         }
 
-        pins.lineWidth = 1.35
+        pins.lineWidth = 1.7
         pins.stroke()
     }
 
     private static func drawSwapBadge(color: NSColor) {
-        let badgeRect = NSRect(x: 11.0, y: 0.8, width: 6.2, height: 8.2)
+        let badgeRect = NSRect(x: 14.0, y: 0.8, width: 6.2, height: 8.2)
         let badge = NSBezierPath(roundedRect: badgeRect, xRadius: 3.1, yRadius: 3.1)
         color.setFill()
         badge.fill()
