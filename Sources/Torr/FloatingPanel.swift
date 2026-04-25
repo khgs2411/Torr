@@ -76,8 +76,25 @@ final class FloatingPanel: NSPanel {
     private func restorePosition() {
         let x = UserDefaults.standard.double(forKey: "torr.panel.x")
         let y = UserDefaults.standard.double(forKey: "torr.panel.y")
-        if x != 0 || y != 0 {
+        guard x != 0 || y != 0 else { return }
+
+        let proposedFrame = NSRect(origin: NSPoint(x: x, y: y), size: frame.size)
+
+        // Check if the window would be visible on any connected screen
+        let isOnScreen = NSScreen.screens.contains { screen in
+            screen.visibleFrame.intersects(proposedFrame)
+        }
+
+        if isOnScreen {
             setFrameOrigin(NSPoint(x: x, y: y))
+        } else {
+            // Fallback: place in top-right of the main screen
+            if let screen = NSScreen.main {
+                let visibleFrame = screen.visibleFrame
+                let safeX = visibleFrame.maxX - frame.width - 20
+                let safeY = visibleFrame.maxY - frame.height - 20
+                setFrameOrigin(NSPoint(x: safeX, y: safeY))
+            }
         }
     }
 

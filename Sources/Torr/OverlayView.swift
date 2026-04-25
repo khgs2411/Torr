@@ -2,10 +2,43 @@ import SwiftUI
 
 struct OverlayView: View {
     @ObservedObject var monitor: MemoryMonitor
+    @AppStorage("torr.collapsed") private var isCollapsed: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
+            if isCollapsed {
+                collapsedContent
+            } else {
+                expandedContent
+            }
+        }
+        .padding(12)
+        .frame(width: 220)
+        .contentShape(Rectangle())
+        .onTapGesture { isCollapsed.toggle() }
+        .animation(.easeInOut(duration: 0.2), value: isCollapsed)
+    }
+
+    private var collapsedContent: some View {
+        ZStack {
             HStack {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.white.opacity(0.4))
+                Spacer()
+            }
+            Text("\(MemoryMonitor.formatBytes(monitor.memoryUsed)) / \(MemoryMonitor.formatBytes(monitor.swapUsed))")
+                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .foregroundColor(pressureColor)
+        }
+    }
+
+    private var expandedContent: some View {
+        Group {
+            HStack(spacing: 4) {
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.white.opacity(0.4))
                 Text("Torr")
                     .font(.system(size: 11, weight: .bold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.6))
@@ -16,6 +49,7 @@ struct OverlayView: View {
             Divider()
                 .background(Color.white.opacity(0.2))
 
+            statRow(label: "Available Storage", value: diskAvailableFormatted)
             statRow(label: "Physical Memory", value: formatTotal(monitor.totalRAM))
             statRow(label: "Memory Used", value: MemoryMonitor.formatBytes(monitor.memoryUsed))
             statRow(label: "Cached Files", value: MemoryMonitor.formatBytes(monitor.cachedFiles))
@@ -31,8 +65,11 @@ struct OverlayView: View {
             .frame(height: 40)
             .clipShape(RoundedRectangle(cornerRadius: 4))
         }
-        .padding(12)
-        .frame(width: 220)
+    }
+
+    private var diskAvailableFormatted: String {
+        let gb = Double(monitor.diskAvailable) / 1_073_741_824.0
+        return String(format: "%.2f GB", gb)
     }
 
     private func statRow(label: String, value: String) -> some View {

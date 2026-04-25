@@ -16,6 +16,7 @@ final class MemoryMonitor: ObservableObject {
     @Published var pressureRatio: Double = 0.0
     @Published var pressureLevel: PressureLevel = .nominal
     @Published var pressureHistory: [Double] = []
+    @Published var diskAvailable: Int64 = 0
 
     let totalRAM: UInt64 = ProcessInfo.processInfo.physicalMemory
 
@@ -74,6 +75,15 @@ final class MemoryMonitor: ObservableObject {
         if pressureHistory.count > maxHistory {
             pressureHistory.removeFirst(pressureHistory.count - maxHistory)
         }
+
+        refreshDiskUsage()
+    }
+
+    private func refreshDiskUsage() {
+        let url = URL(fileURLWithPath: "/")
+        guard let values = try? url.resourceValues(forKeys: [.volumeAvailableCapacityForImportantUsageKey]),
+              let available = values.volumeAvailableCapacityForImportantUsage else { return }
+        diskAvailable = available
     }
 
     private func startPressureMonitoring() {
@@ -130,5 +140,13 @@ final class MemoryMonitor: ObservableObject {
         }
         let mb = Double(bytes) / 1_048_576.0
         return String(format: "%.2f MB", mb)
+    }
+
+    static func formatCompactGB(_ bytes: Int64) -> String {
+        let gb = Double(bytes) / 1_073_741_824.0
+        if gb >= 100 {
+            return String(format: "%.0f", gb)
+        }
+        return String(format: "%.1f", gb)
     }
 }

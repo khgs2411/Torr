@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Torr}",
+            "name": "Debug Torr",
+            "target": "Torr",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug Torr"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:Torr}",
+            "name": "Release Torr",
+            "target": "Torr",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release Torr"
+        }
+    ]
+}
