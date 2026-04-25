@@ -1,5 +1,8 @@
 # Torr
 
+[![CI](https://github.com/khgs2411/Torr/actions/workflows/ci.yml/badge.svg)](https://github.com/khgs2411/Torr/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 A lightweight macOS memory monitor widget. Named after the unit of pressure (Torricelli).
 
 Torr lives in your menu bar and displays a floating translucent overlay with real-time memory statistics sourced directly from Mach kernel APIs.
@@ -61,4 +64,4 @@ swift test
 
 ## License
 
-MIT
+Torr is released under the [MIT License](LICENSE).
