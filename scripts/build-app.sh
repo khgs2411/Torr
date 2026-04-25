@@ -7,6 +7,11 @@ PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 APP_NAME="Torr"
 BUNDLE_DIR="$PROJECT_DIR/build/${APP_NAME}.app"
 DMG_PATH="$PROJECT_DIR/build/${APP_NAME}.dmg"
+SIGN_IDENTITY="${SIGN_IDENTITY:-}"
+NOTARY_KEYCHAIN_PROFILE="${NOTARY_KEYCHAIN_PROFILE:-}"
+NOTARY_APPLE_ID="${NOTARY_APPLE_ID:-}"
+NOTARY_TEAM_ID="${NOTARY_TEAM_ID:-}"
+NOTARY_PASSWORD="${NOTARY_PASSWORD:-}"
 
 echo "==> Building Torr ($CONFIG)..."
 
@@ -46,6 +51,19 @@ echo "==> App bundle created:"
 echo "    $BUNDLE_DIR"
 echo "    Size: $(du -sh "$BUNDLE_DIR" | cut -f1)"
 
+if [ -n "$SIGN_IDENTITY" ]; then
+    echo ""
+    echo "==> Signing app bundle..."
+    codesign --force --deep --options runtime --timestamp \
+        --sign "$SIGN_IDENTITY" \
+        "$BUNDLE_DIR"
+
+    codesign --verify --deep --strict --verbose=2 "$BUNDLE_DIR"
+else
+    echo ""
+    echo "==> Skipping code signing (SIGN_IDENTITY not set)"
+fi
+
 # Create DMG for distribution
 if [ "$CONFIG" = "release" ]; then
     echo ""
@@ -67,6 +85,34 @@ if [ "$CONFIG" = "release" ]; then
         "$DMG_PATH" > /dev/null
 
     rm -rf "$DMG_STAGING"
+
+    if [ -n "$SIGN_IDENTITY" ]; then
+        echo ""
+        echo "==> Signing DMG..."
+        codesign --force --timestamp --sign "$SIGN_IDENTITY" "$DMG_PATH"
+        codesign --verify --verbose=2 "$DMG_PATH"
+    fi
+
+    if [ -n "$NOTARY_KEYCHAIN_PROFILE" ]; then
+        echo ""
+        echo "==> Notarizing DMG with keychain profile..."
+        xcrun notarytool submit "$DMG_PATH" \
+            --keychain-profile "$NOTARY_KEYCHAIN_PROFILE" \
+            --wait
+        xcrun stapler staple "$DMG_PATH"
+    elif [ -n "$NOTARY_APPLE_ID" ] && [ -n "$NOTARY_TEAM_ID" ] && [ -n "$NOTARY_PASSWORD" ]; then
+        echo ""
+        echo "==> Notarizing DMG with Apple ID credentials..."
+        xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$NOTARY_APPLE_ID" \
+            --team-id "$NOTARY_TEAM_ID" \
+            --password "$NOTARY_PASSWORD" \
+            --wait
+        xcrun stapler staple "$DMG_PATH"
+    else
+        echo ""
+        echo "==> Skipping notarization (notary credentials not set)"
+    fi
 
     # Clean up — only keep the DMG
     rm -rf "$BUNDLE_DIR"

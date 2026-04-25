@@ -13,8 +13,31 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Import Developer ID certificate
+        if: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 != '' }}
+        env:
+          MACOS_CERTIFICATE_P12_BASE64: ${{ secrets.MACOS_CERTIFICATE_P12_BASE64 }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          CERTIFICATE_PATH="$RUNNER_TEMP/developer-id.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+
+          echo "$MACOS_CERTIFICATE_P12_BASE64" | base64 --decode > "$CERTIFICATE_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" -P "$MACOS_CERTIFICATE_PASSWORD" -A -t cert -f pkcs12 -k "$KEYCHAIN_PATH"
+          security list-keychain -d user -s "$KEYCHAIN_PATH"
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
       - name: Build and create DMG
         run: ./scripts/build-app.sh release
+        env:
+          SIGN_IDENTITY: ${{ secrets.DEVELOPER_ID_APPLICATION }}
+          NOTARY_APPLE_ID: ${{ secrets.APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          NOTARY_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
 
       - name: Run tests
         run: swift test
@@ -32,7 +55,7 @@ jobs:
             1. Download `Torr.dmg` below
             2. Open the DMG
             3. Drag **Torr** to **Applications**
-            4. Right-click Torr in Applications > **Open** (first time only, since the app is unsigned)
+            4. Open Torr from Applications
 
             ### Requirements
             - macOS 13.0 (Ventura) or later

@@ -22,7 +22,7 @@ Grab the latest release from the [Releases page](https://github.com/khgs2411/Tor
 1. Download **Torr.dmg**
 2. Open the DMG
 3. Drag **Torr** to **Applications**
-4. Right-click Torr in Applications > **Open** (first launch only, since the app is unsigned)
+4. Open Torr from Applications
 
 ### Requirements
 
@@ -47,6 +47,20 @@ swift run Torr
 ```
 
 Produces `build/Torr.dmg` ready to share.
+
+Unsigned local builds are supported by default. To sign and notarize a release
+DMG, provide Apple Developer credentials through environment variables:
+
+```bash
+SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+NOTARY_APPLE_ID="you@example.com" \
+NOTARY_TEAM_ID="TEAMID" \
+NOTARY_PASSWORD="app-specific-password" \
+./scripts/build-app.sh release
+```
+
+The script signs the app bundle, signs the DMG, submits it to Apple notarization,
+and staples the notarization ticket when credentials are present.
 
 ### Tests
 
